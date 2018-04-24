@@ -7,21 +7,48 @@ fun main(args: Array<String>) {
     println("Incorrect number of arguments!")
     return
   }
-  parseSrtFile(args[0])
+  for (subtitle in parseSrtFile(args[0]).subList(0, 5)) {
+    println(subtitle)
+  }
 }
 
-fun parseSrtFile(path: String): MutableList<Subtitle> {
+private fun parseSrtFile(path: String): List<Subtitle> {
   val reader = File(path).bufferedReader()
   val subtitleList = mutableListOf<Subtitle>()
 
-  reader.useLines { lines ->
-    var counter = 0
+  reader.useLines {
+    var index: Long? = null
+    var begin: Timestamp? = null
+    var end: Timestamp? = null
+    var text: String? = null
 
-    for (line in lines) {
-      println(line)
-      if (counter++ > 10) break
+    for (line in it.map { line -> line.trim() }) {
+      if (line.isNotEmpty()) {
+        when {
+          (index == null) -> index = line.toLongOrNull() ?: -1
+          (begin == null) -> {
+            val timestamps = line.split(" --> ")
+
+            begin = parseTimestamp(timestamps[0].trim())
+            end = parseTimestamp(timestamps[1].trim())
+          }
+          (text == null) -> text = line
+          else -> text += " $line"
+        }
+      } else if (text != null) {
+        subtitleList.add(Subtitle(index!!, begin!!, end!!, text))
+        index = null
+        begin = null
+        end = null
+        text = null
+      }
     }
   }
 
-  return subtitleList
+  return subtitleList.toList()
+}
+
+private fun parseTimestamp(timestamp: String): Timestamp {
+  val parts = timestamp.split(":", ",")
+  return Timestamp(parts[0].toInt(), parts[1].toInt(), parts[2].toInt(), parts[3].toInt())
 }

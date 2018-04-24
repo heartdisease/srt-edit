@@ -1,5 +1,7 @@
 package com.github.heartdisease.srtedit
 
+import java.util.*
+
 class Timestamp(
   private val hours: Int,
   private val minutes: Int,
@@ -15,7 +17,7 @@ class Timestamp(
       val numAsString = num.toString()
 
       return if (digits > numAsString.length) {
-        numAsString.padStart(digits - numAsString.length, '0')
+        numAsString.padStart(digits, '0')
       } else {
         numAsString
       }
@@ -46,6 +48,18 @@ class Timestamp(
       diff < 0 -> -1
       else -> 0
     }
+  }
+
+  override fun equals(other: Any?): Boolean {
+    return this === other || other is Timestamp && compareTo(other) == 0
+  }
+
+  override fun hashCode(): Int {
+    return Objects.hash(hours, minutes, seconds, milliseconds)
+  }
+
+  override fun toString(): String {
+    return toSrtString()
   }
 
   fun toMilliseconds(): Long {
