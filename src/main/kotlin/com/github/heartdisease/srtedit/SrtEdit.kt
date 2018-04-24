@@ -7,6 +7,9 @@ fun main(args: Array<String>) {
     println("Incorrect number of arguments!")
     return
   }
+
+  println(Timestamp(0, 5, 3, 250) + Timestamp(0, 2, 1, 150))
+
   for (subtitle in parseSrtFile(args[0]).subList(0, 5)) {
     println(subtitle)
   }

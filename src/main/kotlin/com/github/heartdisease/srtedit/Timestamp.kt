@@ -13,7 +13,7 @@ class Timestamp(
     private const val MINUTE_IN_MS = 60 * 1000L
     private const val SECOND_IN_MS = 1000L
 
-    fun leftpad(num: Int, digits: Int = 2): String {
+    private fun leftpad(num: Int, digits: Int = 2): String {
       val numAsString = num.toString()
 
       return if (digits > numAsString.length) {
@@ -22,22 +22,36 @@ class Timestamp(
         numAsString
       }
     }
+
+    private fun asTimestamp(milliseconds: Long): Timestamp {
+      var remainder = milliseconds
+
+      val hours = remainder / HOUR_IN_MS
+      if (hours > 0L) {
+        remainder %= HOUR_IN_MS
+      }
+
+      val minutes = remainder / MINUTE_IN_MS
+      if (minutes > 0L) {
+        remainder %= MINUTE_IN_MS
+      }
+
+      val seconds = remainder / SECOND_IN_MS
+      if (seconds > 0L) {
+        remainder %= SECOND_IN_MS
+      }
+      val milliseconds = remainder
+
+      return Timestamp(hours.toInt(), minutes.toInt(), seconds.toInt(), milliseconds.toInt())
+    }
   }
 
-  operator fun plus(timestamp: Timestamp) {
-    TODO()
+  operator fun plus(timestamp: Timestamp): Timestamp {
+    return asTimestamp(toMilliseconds() + timestamp.toMilliseconds())
   }
 
-  operator fun plusAssign(timestamp: Timestamp) {
-    TODO()
-  }
-
-  operator fun minus(timestamp: Timestamp) {
-    TODO()
-  }
-
-  operator fun minusAssign(timestamp: Timestamp) {
-    TODO()
+  operator fun minus(timestamp: Timestamp): Timestamp {
+    return asTimestamp(toMilliseconds() - timestamp.toMilliseconds())
   }
 
   fun compareTo(timestamp: Timestamp): Int {
@@ -62,11 +76,11 @@ class Timestamp(
     return toSrtString()
   }
 
-  fun toMilliseconds(): Long {
+  private fun toMilliseconds(): Long {
     return hours * HOUR_IN_MS + minutes * MINUTE_IN_MS + seconds * SECOND_IN_MS + milliseconds
   }
 
-  fun toSrtString(): String {
+  private fun toSrtString(): String {
     return leftpad(hours) + ':' + leftpad(minutes) + ':' + leftpad(seconds) + ',' + leftpad(milliseconds, 3)
   }
 }
