@@ -8,10 +8,21 @@ class Timestamp(
   private val seconds: Int,
   private val milliseconds: Int
 ) {
+  class IllegalTimestampFormatException(override val message: String?) : RuntimeException()
+
   companion object {
     private const val HOUR_IN_MS = 60 * 60 * 1000L
     private const val MINUTE_IN_MS = 60 * 1000L
     private const val SECOND_IN_MS = 1000L
+
+    fun parseTimestamp(timestamp: String): Timestamp {
+      try {
+        val parts = timestamp.split(":", ",")
+        return Timestamp(parts[0].toInt(), parts[1].toInt(), parts[2].toInt(), parts[3].toInt())
+      } catch (e: Exception) {
+        throw IllegalTimestampFormatException("Invalid timestamp: $timestamp")
+      }
+    }
 
     private fun leftpad(num: Int, digits: Int = 2): String {
       val numAsString = num.toString()
@@ -40,19 +51,14 @@ class Timestamp(
       if (seconds > 0L) {
         remainder %= SECOND_IN_MS
       }
-      val milliseconds = remainder
 
-      return Timestamp(hours.toInt(), minutes.toInt(), seconds.toInt(), milliseconds.toInt())
+      return Timestamp(hours.toInt(), minutes.toInt(), seconds.toInt(), remainder.toInt())
     }
   }
 
-  operator fun plus(timestamp: Timestamp): Timestamp {
-    return asTimestamp(toMilliseconds() + timestamp.toMilliseconds())
-  }
+  operator fun plus(timestamp: Timestamp) = asTimestamp(toMilliseconds() + timestamp.toMilliseconds())
 
-  operator fun minus(timestamp: Timestamp): Timestamp {
-    return asTimestamp(toMilliseconds() - timestamp.toMilliseconds())
-  }
+  operator fun minus(timestamp: Timestamp) = asTimestamp(toMilliseconds() - timestamp.toMilliseconds())
 
   fun compareTo(timestamp: Timestamp): Int {
     val diff = toMilliseconds() - timestamp.toMilliseconds()
@@ -64,23 +70,13 @@ class Timestamp(
     }
   }
 
-  override fun equals(other: Any?): Boolean {
-    return this === other || other is Timestamp && compareTo(other) == 0
-  }
+  override fun equals(other: Any?): Boolean = this === other || other is Timestamp && compareTo(other) == 0
 
-  override fun hashCode(): Int {
-    return Objects.hash(hours, minutes, seconds, milliseconds)
-  }
+  override fun hashCode(): Int = Objects.hash(hours, minutes, seconds, milliseconds)
 
-  override fun toString(): String {
-    return toSrtString()
-  }
+  override fun toString(): String = serialize()
 
-  private fun toMilliseconds(): Long {
-    return hours * HOUR_IN_MS + minutes * MINUTE_IN_MS + seconds * SECOND_IN_MS + milliseconds
-  }
+  fun serialize(): String = leftpad(hours) + ':' + leftpad(minutes) + ':' + leftpad(seconds) + ',' + leftpad(milliseconds, 3)
 
-  private fun toSrtString(): String {
-    return leftpad(hours) + ':' + leftpad(minutes) + ':' + leftpad(seconds) + ',' + leftpad(milliseconds, 3)
-  }
+  private fun toMilliseconds(): Long = hours * HOUR_IN_MS + minutes * MINUTE_IN_MS + seconds * SECOND_IN_MS + milliseconds
 }

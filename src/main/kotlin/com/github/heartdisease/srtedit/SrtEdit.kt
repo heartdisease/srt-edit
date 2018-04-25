@@ -3,20 +3,42 @@ package com.github.heartdisease.srtedit
 import java.io.File
 
 fun main(args: Array<String>) {
-  if (args.size != 1) {
+  if (args.size != 3) {
     println("Incorrect number of arguments!")
+    println("java SrtEdit [srt file] [action] [timestamp]")
+    println("action: add | remove")
+    println("timestamp: hh:mm:ss,ms")
     return
   }
 
-  println(Timestamp(0, 5, 3, 250) + Timestamp(0, 2, 1, 150))
+  val action = args[1]
+  val timestamp = Timestamp.parseTimestamp(args[2])
+  val subtitles = parseSrtFile(args[0]).subList(0, 5).map {
+    val begin: Timestamp
+    val end: Timestamp
 
-  for (subtitle in parseSrtFile(args[0]).subList(0, 5)) {
-    println(subtitle)
+    when (action) {
+      "add" -> {
+        begin = it.begin + timestamp
+        end = it.end + timestamp
+      }
+      "remove" -> {
+        begin = it.begin - timestamp
+        end = it.end - timestamp
+      }
+      else -> throw IllegalArgumentException("Unsupported action '$action'")
+    }
+    Subtitle(it.index, begin, end, it.text)
+  }
+
+  for (subtitle in subtitles) {
+    println(subtitle.serialize())
+    println()
   }
 }
 
 private fun parseSrtFile(path: String): List<Subtitle> {
-  val reader = File(path).bufferedReader()
+  val reader = File(path).bufferedReader(Charsets.UTF_8)
   val subtitleList = mutableListOf<Subtitle>()
 
   reader.useLines {
@@ -28,15 +50,15 @@ private fun parseSrtFile(path: String): List<Subtitle> {
     for (line in it.map { line -> line.trim() }) {
       if (line.isNotEmpty()) {
         when {
-          (index == null) -> index = line.toLongOrNull() ?: -1
+          (index == null) -> index = line.toLong()
           (begin == null) -> {
             val timestamps = line.split(" --> ")
 
-            begin = parseTimestamp(timestamps[0].trim())
-            end = parseTimestamp(timestamps[1].trim())
+            begin = Timestamp.parseTimestamp(timestamps[0].trim())
+            end = Timestamp.parseTimestamp(timestamps[1].trim())
           }
           (text == null) -> text = line
-          else -> text += " $line"
+          else -> text += "\n$line"
         }
       } else if (text != null) {
         subtitleList.add(Subtitle(index!!, begin!!, end!!, text))
@@ -48,10 +70,6 @@ private fun parseSrtFile(path: String): List<Subtitle> {
     }
   }
 
+  subtitleList.sortBy { it -> it.index } // ensure subtitles are sorted correctly according to index
   return subtitleList.toList()
-}
-
-private fun parseTimestamp(timestamp: String): Timestamp {
-  val parts = timestamp.split(":", ",")
-  return Timestamp(parts[0].toInt(), parts[1].toInt(), parts[2].toInt(), parts[3].toInt())
 }
