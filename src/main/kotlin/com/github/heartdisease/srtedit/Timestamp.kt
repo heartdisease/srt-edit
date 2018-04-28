@@ -8,30 +8,14 @@ class Timestamp(
   private val seconds: Int,
   private val milliseconds: Int
 ) {
-  class IllegalTimestampFormatException(override val message: String?) : RuntimeException()
-
   companion object {
     private const val HOUR_IN_MS = 60 * 60 * 1000L
     private const val MINUTE_IN_MS = 60 * 1000L
     private const val SECOND_IN_MS = 1000L
 
-    fun parseTimestamp(timestamp: String): Timestamp {
-      try {
-        val parts = timestamp.split(":", ",")
-        return Timestamp(parts[0].toInt(), parts[1].toInt(), parts[2].toInt(), parts[3].toInt())
-      } catch (e: Exception) {
-        throw IllegalTimestampFormatException("Invalid timestamp: $timestamp")
-      }
-    }
-
     private fun leftpad(num: Int, digits: Int = 2): String {
       val numAsString = num.toString()
-
-      return if (digits > numAsString.length) {
-        numAsString.padStart(digits, '0')
-      } else {
-        numAsString
-      }
+      return if (digits > numAsString.length) numAsString.padStart(digits, '0') else numAsString
     }
 
     private fun asTimestamp(milliseconds: Long): Timestamp {

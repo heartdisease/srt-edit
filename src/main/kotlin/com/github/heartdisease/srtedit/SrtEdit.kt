@@ -12,8 +12,9 @@ fun main(args: Array<String>) {
   }
 
   val action = args[1]
-  val timestamp = Timestamp.parseTimestamp(args[2])
-  val subtitles = parseSrtFile(args[0]).subList(0, 5).map {
+  val timestamp = parseTimestamp(args[2])
+  val parser = SrtParser().parse(File(args[0]))
+  val subtitles = parser.subtitles.map {
     val begin: Timestamp
     val end: Timestamp
 
@@ -35,41 +36,4 @@ fun main(args: Array<String>) {
     println(subtitle.serialize())
     println()
   }
-}
-
-private fun parseSrtFile(path: String): List<Subtitle> {
-  val reader = File(path).bufferedReader(Charsets.UTF_8)
-  val subtitleList = mutableListOf<Subtitle>()
-
-  reader.useLines {
-    var index: Long? = null
-    var begin: Timestamp? = null
-    var end: Timestamp? = null
-    var text: String? = null
-
-    for (line in it.map { line -> line.trim() }) {
-      if (line.isNotEmpty()) {
-        when {
-          (index == null) -> index = line.toLong()
-          (begin == null) -> {
-            val timestamps = line.split(" --> ")
-
-            begin = Timestamp.parseTimestamp(timestamps[0].trim())
-            end = Timestamp.parseTimestamp(timestamps[1].trim())
-          }
-          (text == null) -> text = line
-          else -> text += "\n$line"
-        }
-      } else if (text != null) {
-        subtitleList.add(Subtitle(index!!, begin!!, end!!, text))
-        index = null
-        begin = null
-        end = null
-        text = null
-      }
-    }
-  }
-
-  subtitleList.sortBy { it -> it.index } // ensure subtitles are sorted correctly according to index
-  return subtitleList.toList()
 }
