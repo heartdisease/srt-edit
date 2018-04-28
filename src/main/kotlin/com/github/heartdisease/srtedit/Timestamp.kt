@@ -13,36 +13,31 @@ class Timestamp(
     private const val MINUTE_IN_MS = 60 * 1000L
     private const val SECOND_IN_MS = 1000L
 
-    private fun leftpad(num: Int, digits: Int = 2): String {
-      val numAsString = num.toString()
-      return if (digits > numAsString.length) numAsString.padStart(digits, '0') else numAsString
-    }
-
-    private fun asTimestamp(milliseconds: Long): Timestamp {
+    private fun fromMilliseconds(milliseconds: Long): Timestamp {
       var remainder = milliseconds
 
-      val hours = remainder / HOUR_IN_MS
+      val hours = remainder / Timestamp.HOUR_IN_MS
       if (hours > 0L) {
-        remainder %= HOUR_IN_MS
+        remainder %= Timestamp.HOUR_IN_MS
       }
 
-      val minutes = remainder / MINUTE_IN_MS
+      val minutes = remainder / Timestamp.MINUTE_IN_MS
       if (minutes > 0L) {
-        remainder %= MINUTE_IN_MS
+        remainder %= Timestamp.MINUTE_IN_MS
       }
 
-      val seconds = remainder / SECOND_IN_MS
+      val seconds = remainder / Timestamp.SECOND_IN_MS
       if (seconds > 0L) {
-        remainder %= SECOND_IN_MS
+        remainder %= Timestamp.SECOND_IN_MS
       }
 
       return Timestamp(hours.toInt(), minutes.toInt(), seconds.toInt(), remainder.toInt())
     }
   }
 
-  operator fun plus(timestamp: Timestamp) = asTimestamp(toMilliseconds() + timestamp.toMilliseconds())
+  operator fun plus(timestamp: Timestamp) = fromMilliseconds(toMilliseconds() + timestamp.toMilliseconds())
 
-  operator fun minus(timestamp: Timestamp) = asTimestamp(toMilliseconds() - timestamp.toMilliseconds())
+  operator fun minus(timestamp: Timestamp) = fromMilliseconds(toMilliseconds() - timestamp.toMilliseconds())
 
   fun compareTo(timestamp: Timestamp): Int {
     val diff = toMilliseconds() - timestamp.toMilliseconds()
@@ -63,4 +58,9 @@ class Timestamp(
   fun serialize(): String = leftpad(hours) + ':' + leftpad(minutes) + ':' + leftpad(seconds) + ',' + leftpad(milliseconds, 3)
 
   private fun toMilliseconds(): Long = hours * HOUR_IN_MS + minutes * MINUTE_IN_MS + seconds * SECOND_IN_MS + milliseconds
+}
+
+private fun leftpad(num: Int, digits: Int = 2): String {
+  val numAsString = num.toString()
+  return if (digits > numAsString.length) numAsString.padStart(digits, '0') else numAsString
 }
